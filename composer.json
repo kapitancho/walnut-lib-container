@@ -1,0 +1,21 @@
+{
+    "name": "walnut/lib_container",
+    "authors": [
+        {
+            "name": "Marian Kostadinov",
+            "email": "manchokapitancho@gmail.com"
+        }
+    ],
+	"autoload": {
+		"psr-4": {
+			"Walnut\\Lib\\Container\\": "src/"
+		}
+	},
+	"require": {
+		"psr/container": "*"
+	},
+	"require-dev": {
+		"vimeo/psalm": "^4.9.3",
+		"phpunit/phpunit": "^9.5.9"
+	}
+}
