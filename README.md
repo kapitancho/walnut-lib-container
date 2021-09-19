@@ -26,7 +26,7 @@ $mapping = [
     LoggerInterface::class => FileLogger::class,
     FileLogger::class => LocalFileLogger::class
 ];
-$container = new Container($mapping);
+$container = new ContainerAdapter(new Container($mapping));
 $container->get(UserService::class); //returns UserService with injected DbUserRepository
 $container->get(LoggerInterface::class); //returns LocalFileLogger 
 ```

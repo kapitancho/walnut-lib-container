@@ -12,7 +12,8 @@
 		}
 	},
 	"require": {
-		"psr/container": "*"
+		"psr/container": "*",
+		"php": ">=8.0.0"
 	},
 	"require-dev": {
 		"vimeo/psalm": "^4.9.3",

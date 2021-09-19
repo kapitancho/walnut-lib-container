@@ -5,7 +5,7 @@ namespace Walnut\Lib\Container;
 use Closure;
 use Psr\Container\ContainerInterface;
 
-final class Container implements ContainerInterface {
+final class Container {
 
 	/**
 	 * @var bool[]
@@ -25,7 +25,8 @@ final class Container implements ContainerInterface {
 	 * @param array<string, string|callable|array<string, mixed>> $mapping
 	 */
 	public function __construct(array $mapping) {
-		$this->containerCache[ContainerInterface::class] = $this->containerCache[self::class] = $this;
+		$this->containerCache[self::class] = $this;
+		$this->containerCache[ContainerInterface::class] = new ContainerAdapter($this);
 		$this->containerMapper = new ContainerMapper($mapping);
 		$this->containerLoader = new ContainerLoader(new ParameterBuilder($this));
 	}
@@ -33,19 +34,34 @@ final class Container implements ContainerInterface {
 	/**
 	 * @template T
 	 * @param class-string<T> $className
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
 	 * @return T
 	 */
-	private function instantiate(string $className): object {
+	private function instantiate(string $className, array $context = []): object {
 		if ($this->cycleProtector[$className] ?? false) {
-			throw new ContainerException($className, "Class $className has a cyclic dependency");
+			throw new ContainerException($className, "Class $className has a cyclic dependency: " .
+				implode(' / ', array_keys($this->cycleProtector)));
 		}
 		$this->cycleProtector[$className] = true;
 		$containerMapping = $this->containerMapper->findClass($className);
 
-		if ($containerMapping instanceof Closure) {
-			return $this->containerLoader->loadUsingClosure($containerMapping, $className);
-		}
-		return $this->containerLoader->loadUsingMapping($containerMapping, $className);
+		$result = ($containerMapping instanceof Closure) ?
+			$this->containerLoader->loadUsingClosure($containerMapping, $className, $context) :
+			$this->containerLoader->loadUsingMapping($containerMapping, $className);
+
+		unset($this->cycleProtector[$className]);
+		return $result;
+	}
+
+	/**
+	 * @template T of object
+	 * @param class-string<T> $className
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
+	 * @return T
+	 */
+	public function contextInstanceOf(string $className, array $context = []): object {
+		return count($context) ? $this->instantiate($className, $context) :
+			$this->instanceOf($className);
 	}
 
 	/**
@@ -61,33 +77,13 @@ final class Container implements ContainerInterface {
 	}
 
 	/**
-	 * Finds an entry of the container by its identifier and returns it.
-	 *
-	 * @param string $id Identifier of the entry to look for.
-	 *
-	 * @return object Entry.
-	 */
-	public function get($id): object {
-		/**
-		 * @var class-string $id
-		 */
-		return $this->containerCache[$id] ??= $this->instantiate($id);
-	}
-
-	/**
-	 * Returns true if the container can return an entry for the given identifier.
-	 * Returns false otherwise.
-	 *
-	 * `has($id)` returning true does not mean that `get($id)` will not throw an exception.
-	 * It does however mean that `get($id)` will not throw a `NotFoundExceptionInterface`.
-	 *
-	 * @param string $id Identifier of the entry to look for.
-	 *
+	 * @param class-string $className
 	 * @return bool
 	 */
-	public function has($id): bool {
-		return array_key_exists($id, $this->containerCache) ||
-			class_exists($id) || interface_exists($id);
+	public function has(string $className): bool {
+		return array_key_exists($className, $this->containerCache) ||
+			interface_exists($className) ||
+			class_exists($className) ;
 	}
 	
 }

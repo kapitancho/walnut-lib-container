@@ -2,7 +2,9 @@
 
 use PHPUnit\Framework\TestCase;
 use Walnut\Lib\Container\Container;
+use Walnut\Lib\Container\ContainerAdapter;
 use Walnut\Lib\Container\ContainerException;
+use Walnut\Lib\Container\FromAttribute;
 use Walnut\Lib\Container\NotFoundException;
 
 interface MockContainerInterface {}
@@ -30,13 +32,15 @@ final class IntegrationTest extends TestCase {
 		$mapping = [
 			MockContainerInterface::class => MockContainerAbstractClass::class,
 			MockContainerAbstractClass::class => MockContainerConcreteClass::class,
-			MockContainerCustomClass::class => static fn(MockContainerInterface $obj) =>
+			MockContainerCustomClass::class => static fn(
+				MockContainerInterface $obj
+			) =>
 				new MockContainerCustomClass(strlen(get_class($obj)), $obj),
 			MockContainerParameterClass::class => [
 				'param' => 10
 			]
 		];
-		$container = new Container($mapping);
+		$container = new ContainerAdapter($c = new Container($mapping));
 		$this->assertInstanceOf(MockContainerConcreteClass::class,
 			$container->get(MockContainerInterface::class));
 		$this->assertEquals(strlen(MockContainerConcreteClass::class),
@@ -46,7 +50,7 @@ final class IntegrationTest extends TestCase {
 
 		$this->assertEquals(
 			$container->get(MockContainerInterface::class),
-			$container->instanceOf(MockContainerInterface::class)
+			$c->instanceOf(MockContainerInterface::class)
 		);
 		$this->assertTrue($container->has(MockContainerInterface::class));
 		$this->assertFalse($container->has(MockContainerInterface::class . 'INVALID NAME'));
@@ -58,13 +62,13 @@ final class IntegrationTest extends TestCase {
 			MockContainerInterface::class => MockContainerAbstractClass::class,
 			MockContainerAbstractClass::class => MockContainerInterface::class
 		];
-		$container = new Container($mapping);
+		$container = new ContainerAdapter(new Container($mapping));
 		$container->get(MockContainerInterface::class);
 	}
 
 	public function testContainerException(): void {
 		$className = MockContainerInterface::class . 'INVALID NAME';
-		$container = new Container([]);
+		$container = new ContainerAdapter(new Container([]));
 		try {
 			$container->get($className);
 		} catch (ContainerException $ex) {
@@ -80,21 +84,21 @@ final class IntegrationTest extends TestCase {
 			MockContainerParameterClass::class => static fn(MockContainerInterface $obj) =>
 				new MockContainerCustomClass(strlen(get_class($obj)), $obj)
 		];
-		$container = new Container($mapping);
+		$container = new ContainerAdapter(new Container($mapping));
 		$container->get(MockContainerParameterClass::class);
 	}
 
 	public function testInstantiateInterface(): void {
 		$this->expectException(ContainerException::class);
-		$container = new Container([]);
+		$container = new ContainerAdapter(new Container([]));
 		$container->get(MockContainerInterface::class);
 	}
 
 	public function testInstantiateAbstractClass(): void {
 		$this->expectException(ContainerException::class);
-		$container = new Container([
+		$container = new ContainerAdapter(new Container([
 			MockContainerInterface::class => MockContainerAbstractClass::class
-		]);
+		]));
 		$container->get(MockContainerInterface::class);
 	}
 
@@ -104,13 +108,13 @@ final class IntegrationTest extends TestCase {
 			MockContainerInterface::class => MockContainerAbstractClass::class,
 			MockContainerAbstractClass::class => static fn(MockContainerInterface $param) => null
 		];
-		$container = new Container($mapping);
+		$container = new ContainerAdapter(new Container($mapping));
 		$container->get(MockContainerInterface::class);
 	}
 
 	public function testUnknownClass(): void {
 		$this->expectException(NotFoundException::class);
-		$container = new Container([]);
+		$container = new ContainerAdapter(new Container([]));
 		$container->get(MockContainerInterface::class . 'INVALID NAME');
 	}
 
@@ -118,7 +122,7 @@ final class IntegrationTest extends TestCase {
 		$this->expectException(ContainerException::class);
 
 		$mapping = [];
-		$container = new Container($mapping);
+		$container = new ContainerAdapter(new Container($mapping));
 		$container->get(MockContainerParameterClass::class);
 	}
 

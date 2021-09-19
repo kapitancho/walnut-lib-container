@@ -17,15 +17,16 @@ final class ContainerLoader {
 	 * @template T
 	 * @param Closure $closure
 	 * @param class-string<T> $className
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
 	 * @return T
 	 * @throws ContainerException
 	 */
-	public function loadUsingClosure(Closure $closure, string $className): object {
+	public function loadUsingClosure(Closure $closure, string $className, array $context): object {
 		try {
 			$result = $closure(... $this->parameterBuilder->getMethodArgs(
 				new ReflectionFunction($closure), [
 					'className' => $className,
-				]
+				], $context
 			));
 			if (!($result instanceof $className)) {
 				throw new ContainerException($className, "The callable did not return an instance of $className");
