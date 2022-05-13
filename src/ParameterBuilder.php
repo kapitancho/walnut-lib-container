@@ -11,7 +11,7 @@ use ReflectionUnionType;
 
 final class ParameterBuilder {
 	public function __construct(
-		private /*readonly*/ Container $container
+		private readonly Container $container
 	) {}
 
 	/**

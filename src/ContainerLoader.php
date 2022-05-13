@@ -10,7 +10,7 @@ use ReflectionFunction;
 final class ContainerLoader {
 
 	public function __construct(
-		private /*readonly*/ ParameterBuilder $parameterBuilder
+		private readonly ParameterBuilder $parameterBuilder
 	) {}
 
 	/**

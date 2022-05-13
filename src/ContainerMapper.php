@@ -11,7 +11,7 @@ final class ContainerMapper {
 	 * @param array<string, string|callable|array<string, mixed>> $mapping
 	 */
 	public function __construct(
-		private /*readonly*/ array $mapping
+		private readonly array $mapping
 	) {}
 
 	/**

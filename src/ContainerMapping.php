@@ -18,8 +18,8 @@ final class ContainerMapping {
 	 * @param array $additionalContext
 	 */
 	public function __construct(
-		public /*readonly*/ string $className,
-		public /*readonly*/ array $additionalContext
+		public readonly string $className,
+		public readonly array $additionalContext
 	) {}
 
 }

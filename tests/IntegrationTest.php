@@ -20,9 +20,10 @@ final class MockContainerParameterClass {
 	public function __construct(
 		public int $param,
 		public ?string $nullableText,
-		public ?int $nullable = null,
 		public MockContainerCustomClass $obj,
-		public MockContainerInterfaceOther|MockContainerInterface $union
+		public MockContainerInterfaceOther|MockContainerInterface $union,
+		public int $defaultValue = 1,
+		public ?int $nullable = null,
 	) {}
 }
 
@@ -46,6 +47,7 @@ final class IntegrationTest extends TestCase {
 		$this->assertEquals(strlen(MockContainerConcreteClass::class),
 			$container->get(MockContainerCustomClass::class)->number);
 		$this->assertEquals(10, $container->get(MockContainerParameterClass::class)->param);
+		$this->assertEquals(1, $container->get(MockContainerParameterClass::class)->defaultValue);
 		$this->assertNull($container->get(MockContainerParameterClass::class)->nullable);
 
 		$this->assertEquals(

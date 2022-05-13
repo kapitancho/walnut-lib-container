@@ -7,7 +7,7 @@ use Psr\Container\ContainerInterface;
 
 final class ContainerAdapter implements ContainerInterface {
 
-	public function __construct(private /*readonly*/ Container $container) {}
+	public function __construct(private readonly Container $container) {}
 
 	/**
 	 * Finds an entry of the container by its identifier and returns it.

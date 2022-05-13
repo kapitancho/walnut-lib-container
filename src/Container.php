@@ -17,8 +17,8 @@ final class Container {
 	 */
 	private array $containerCache = [];
 
-	private /*readonly*/ ContainerMapper $containerMapper;
-	private /*readonly*/ ContainerLoader $containerLoader;
+	private readonly ContainerMapper $containerMapper;
+	private readonly ContainerLoader $containerLoader;
 
 	/**
 	 * DI constructor.
