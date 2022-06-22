@@ -2,6 +2,7 @@
 
 namespace Walnut\Lib\Container;
 
+use Attribute;
 use Closure;
 use Psr\Container\ContainerInterface;
 
@@ -24,7 +25,8 @@ final class Container {
 	 * DI constructor.
 	 * @param array<string, string|callable|array<string, mixed>> $mapping
 	 */
-	public function __construct(array $mapping) {
+	public function __construct(array $mapping, 
+	            private readonly ContainerDecorator $containerDecorator = new EmptyContainerDecorator) {
 		$this->containerCache[self::class] = $this;
 		$this->containerCache[ContainerInterface::class] = new ContainerAdapter($this);
 		$this->containerMapper = new ContainerMapper($mapping);
@@ -34,7 +36,7 @@ final class Container {
 	/**
 	 * @template T
 	 * @param class-string<T> $className
-	 * @param array<class-string<\Attribute>, \Attribute[]> $context
+	 * @param array<class-string<Attribute>, Attribute[]> $context
 	 * @return T
 	 */
 	private function instantiate(string $className, array $context = []): object {
@@ -49,6 +51,8 @@ final class Container {
 			$this->containerLoader->loadUsingClosure($containerMapping, $className, $context) :
 			$this->containerLoader->loadUsingMapping($containerMapping, $className);
 
+		$result = $this->containerDecorator->apply($result, $className);
+		
 		unset($this->cycleProtector[$className]);
 		return $result;
 	}
@@ -56,7 +60,7 @@ final class Container {
 	/**
 	 * @template T of object
 	 * @param class-string<T> $className
-	 * @param array<class-string<\Attribute>, \Attribute[]> $context
+	 * @param array<class-string<Attribute>, Attribute[]> $context
 	 * @return T
 	 */
 	public function contextInstanceOf(string $className, array $context = []): object {
