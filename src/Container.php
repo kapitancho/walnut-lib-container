@@ -20,17 +20,22 @@ final class Container {
 
 	private readonly ContainerMapper $containerMapper;
 	private readonly ContainerLoader $containerLoader;
+	private ContainerDecorator $containerDecorator;
 
 	/**
 	 * DI constructor.
 	 * @param array<string, string|callable|array<string, mixed>> $mapping
+	 * @param class-string<ContainerDecorator> $containerDecorator
 	 */
-	public function __construct(array $mapping, 
-	            private readonly ContainerDecorator $containerDecorator = new EmptyContainerDecorator) {
+	public function __construct(array $mapping, string $containerDecorator = EmptyContainerDecorator::class) {
 		$this->containerCache[self::class] = $this;
 		$this->containerCache[ContainerInterface::class] = new ContainerAdapter($this);
 		$this->containerMapper = new ContainerMapper($mapping);
 		$this->containerLoader = new ContainerLoader(new ParameterBuilder($this));
+		$this->containerDecorator = new EmptyContainerDecorator;
+		if ($containerDecorator !== EmptyContainerDecorator::class) {
+			$this->containerDecorator = $this->instanceOf($containerDecorator);
+		}
 	}
 
 	/**

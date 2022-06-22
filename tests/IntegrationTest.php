@@ -3,6 +3,7 @@
 use PHPUnit\Framework\TestCase;
 use Walnut\Lib\Container\Container;
 use Walnut\Lib\Container\ContainerAdapter;
+use Walnut\Lib\Container\ContainerDecorator;
 use Walnut\Lib\Container\ContainerException;
 use Walnut\Lib\Container\FromAttribute;
 use Walnut\Lib\Container\NotFoundException;
@@ -55,6 +56,17 @@ final class IntegrationTest extends TestCase {
 			$c->instanceOf(MockContainerInterface::class)
 		);
 		$this->assertTrue($container->has(MockContainerInterface::class));
+		$this->assertFalse($container->has(MockContainerInterface::class . 'INVALID NAME'));
+	}
+
+	public function testDecorator(): void {
+		$container = new ContainerAdapter(new Container([], (
+			new class implements ContainerDecorator {
+				public function apply(object $instance, string $className): object {
+					return $instance;
+				}
+			}
+		)::class));
 		$this->assertFalse($container->has(MockContainerInterface::class . 'INVALID NAME'));
 	}
 
