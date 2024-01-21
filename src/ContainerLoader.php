@@ -43,10 +43,11 @@ final class ContainerLoader {
 	 * @template T of object
 	 * @param ContainerMapping<T> $containerMapping
 	 * @param class-string $className
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
 	 * @return T
 	 * @throws ContainerException
 	 */
-	public function loadUsingMapping(ContainerMapping $containerMapping, string $className): object {
+	public function loadUsingMapping(ContainerMapping $containerMapping, string $className, array $context): object {
 		try {
 			$additionalContext = $containerMapping->additionalContext;
 			$currentClassName = $containerMapping->className;
@@ -64,7 +65,7 @@ final class ContainerLoader {
 			/**
 			 * @var T
 			 */
-			return $classInfo->newInstanceArgs($this->parameterBuilder->getClassArgs($classInfo, $additionalContext));
+			return $classInfo->newInstanceArgs($this->parameterBuilder->getClassArgs($classInfo, $additionalContext, $context));
 		} catch (ReflectionException $ex) {
 			// @codeCoverageIgnoreStart
 			throw new ContainerException($className, $ex->getMessage());

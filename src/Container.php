@@ -41,10 +41,13 @@ final class Container {
 	/**
 	 * @template T
 	 * @param class-string<T> $className
-	 * @param array<class-string<Attribute>, Attribute[]> $context
+	 * @param array<class-string<Attribute>, object[]> $context
 	 * @return T
 	 */
 	private function instantiate(string $className, array $context = []): object {
+		if ($className === self::class || $className === ContainerInterface::class) {
+			return $this;
+		}
 		if ($this->cycleProtector[$className] ?? false) {
 			throw new ContainerException($className, "Class $className has a cyclic dependency: " .
 				implode(' / ', array_keys($this->cycleProtector)));
@@ -54,7 +57,7 @@ final class Container {
 
 		$result = ($containerMapping instanceof Closure) ?
 			$this->containerLoader->loadUsingClosure($containerMapping, $className, $context) :
-			$this->containerLoader->loadUsingMapping($containerMapping, $className);
+			$this->containerLoader->loadUsingMapping($containerMapping, $className, $context);
 
 		$result = $this->containerDecorator->apply($result, $className);
 		
@@ -62,10 +65,18 @@ final class Container {
 		return $result;
 	}
 
+	public function withAdditionalMapping(array $additionalMapping) {
+		$c = new self($additionalMapping +
+			(fn() => $this->mapping)->call($this->containerMapper));
+		$c->containerCache += $this->containerCache;
+		$c->cycleProtector += $this->cycleProtector;
+		return $c;
+	}
+
 	/**
 	 * @template T of object
 	 * @param class-string<T> $className
-	 * @param array<class-string<Attribute>, Attribute[]> $context
+	 * @param array<class-string<Attribute>, object[]> $context
 	 * @return T
 	 */
 	public function contextInstanceOf(string $className, array $context = []): object {

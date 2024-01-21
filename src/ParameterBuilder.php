@@ -16,10 +16,11 @@ final class ParameterBuilder {
 
 	/**
 	 * @param ReflectionParameter $parameter
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
 	 * @return array<class-string<\Attribute>, \Attribute[]>
 	 */
-	private function getContext(ReflectionParameter $parameter): array {
-		$result = [];
+	private function getContext(ReflectionParameter $parameter, array $context = []): array {
+		$result = $context;
 		foreach ($parameter->getAttributes() as $attribute) {
 			$result[$attribute->getName()] ??= [];
 			$result[$attribute->getName()][] = $attribute->newInstance();
@@ -30,7 +31,13 @@ final class ParameterBuilder {
 		return $result;
 	}
 
-	private function getParameterValue(ReflectionFunctionAbstract $method, ReflectionParameter $parameter): mixed {
+	/**
+	 * @param ReflectionFunctionAbstract $method
+	 * @param ReflectionParameter $parameter
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
+	 * @return mixed
+	 */
+	private function getParameterValue(ReflectionFunctionAbstract $method, ReflectionParameter $parameter, array $context = []): mixed {
 		$type = $parameter->getType();
 		if ($type instanceof ReflectionUnionType) {
 			foreach($type->getTypes() as $subType) {
@@ -41,7 +48,7 @@ final class ParameterBuilder {
 					$subTypeName = $subType->getName();
 					if ($this->container->has($subTypeName)) {
 						return $this->container->contextInstanceOf($subTypeName,
-							$this->getContext($parameter));
+							$this->getContext($parameter, $context));
 					}
 				}
 			}
@@ -51,7 +58,8 @@ final class ParameterBuilder {
 			 * @var class-string
 			 */
 			$typeName = $type->getName();
-			return $this->container->contextInstanceOf($typeName, $this->getContext($parameter));
+			return $this->container->contextInstanceOf($typeName,
+				$this->getContext($parameter, $context));
 		}
 		if ($parameter->isDefaultValueAvailable()) {
 			return $parameter->getDefaultValue();
@@ -102,7 +110,7 @@ final class ParameterBuilder {
 				 * @var mixed
 				 */
 				$args[] = array_key_exists($key = $parameter->getName(), $extraMapping) ?
-					$extraMapping[$key] : $this->getParameterValue($method, $parameter);
+					$extraMapping[$key] : $this->getParameterValue($method, $parameter, $context);
 			}
 		}
 		return $args;
@@ -111,14 +119,15 @@ final class ParameterBuilder {
 	/**
 	 * @param ReflectionClass $class
 	 * @param array $extraMapping
+	 * @param array<class-string<\Attribute>, \Attribute[]> $context
 	 * @return list<mixed>
 	 */
-	public function getClassArgs(ReflectionClass $class, array $extraMapping = []): array {
+	public function getClassArgs(ReflectionClass $class, array $extraMapping = [], array $context = []): array {
 		$constructor = $class->getConstructor();
 		if (!$constructor) {
 			return [];
 		}
-		return $this->getMethodArgs($constructor, $extraMapping);
+		return $this->getMethodArgs($constructor, $extraMapping, $context);
 	}
 
 }
